@@ -1,0 +1,12 @@
+version: "3.9"
+services:
+  java_config:
+    image: openjdk:11.0.8-jdk
+    volumes:
+      - ./:/terrier-core
+    working_dir: /terrier-core
+    # command: mvn install -DskipTests
+    tty: true
+    stdin_open: true
+    ports:
+      - "8080:8080"
