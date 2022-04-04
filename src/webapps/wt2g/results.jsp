@@ -1,4 +1,4 @@
-<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
+<%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"
     import="org.terrier.querying.*"
     import="org.terrier.structures.Index"
@@ -80,7 +80,8 @@ protected static void displayResults(ResultSet rs, int iStart, javax.servlet.jsp
 	out.print("<th>"+"Document"+"</th>");
 	out.print("<th>"+"Score"+"</th>");
 	out.print("</tr>");
-	for(int i=0;i<rs.getResultSize();i++)
+	int end = Math.min(rs.getResultSize(),  NUM_RESULTS_PER_PAGE);
+	for(int i=0;i<end;i++)
 	{	
 		out.print("<tr>");
 		final int rank = iStart + i + 1;
@@ -98,15 +99,15 @@ protected static void displayResults(ResultSet rs, int iStart, javax.servlet.jsp
 		out.print("</tr>");
 		out.print("<tr>");
 		out.print("<td>"+""+"</td>");
-		j = key2metaoffset.get("body_emph");
-		out.print("<td align=\"left\"><span class=\"results_body_emph\"><font size=\"3\">"+meta[j][i].replace('"', '\'')+"</font></span></td>");
+		j = key2metaoffset.get("abstract");
+		out.print("<td align=\"left\"><span class=\"results_body_emph\"><font size=\"3\">"+meta[j][i].replace('"', '\'')+"</font></span>");
 		out.print("<td><span class=\"results_score\">"+(new Double(scores[i])).toString().substring(0,6)+"</span></td>");
        out.print("</tr>");
 		out.print("<tr>");
 		out.print("<td>"+""+"</td>");
-		out.print("<td align=\"left\"><span class=\"results_url\"><font size=\"2\" color=\"#0E774A\">"+url.replace("http://", "")+"</font></span>");
-		j = key2metaoffset.get("docno");
-		out.print("<font size=\"2\"> - </font><span class=\"results_docno\"><font size=\"2\" color=\"#0E774A\">"+meta[j][i]+"</font></span>");
+		
+		out.print("<td align=\"left\"><span class=\"results_url\"><font size=\"2\" color=\"#0E774A\">"+url.replace("https://", "")+"</font></span>");
+
 		String date = "";
 		if (key2metaoffset.contains("crawldate"))
 		{
@@ -188,11 +189,6 @@ if (sStart == null || sStart.length() == 0)
 else
 {
 	iStart = Integer.parseInt(sStart);
-	if (iStart > 1000)
-	{
-		iStart = 1000;
-		sStart = "1000";
-	}
 }
 
 IndexRef indexref = (IndexRef)application.getAttribute("terrier.jsp.index");
@@ -212,12 +208,12 @@ SearchRequest srq = queryingManager.newSearchRequest("webquery", query);
 srq.setOriginalQuery(query);
 srq.setControl("start", sStart);
 srq.setControl("decorate", "on");
-srq.setControl("end", String.valueOf(iStart + NUM_RESULTS_PER_PAGE -1));
+//srq.setControl("end", String.valueOf(iStart + NUM_RESULTS_PER_PAGE -1));
 srq.addMatchingModel(defaultMatching, model);
 queryingManager.runSearchRequest(srq);
 ResultSet rs = ((Request)srq).getResultSet();
 int firstDisplayRank = iStart +1;
-int lastDisplayRank = 1+ Math.min(rs.getExactResultSize() -1, iStart + NUM_RESULTS_PER_PAGE);
+int lastDisplayRank = Math.min(rs.getExactResultSize() , iStart + NUM_RESULTS_PER_PAGE);
 int possibleRanks = rs.getExactResultSize();
 
 %>
@@ -239,6 +235,9 @@ int possibleRanks = rs.getExactResultSize();
 <div id="summary"><font color="#ffffff">
 Results for <%=query%>, displaying <%=firstDisplayRank%>-<%=lastDisplayRank%> of <%=possibleRanks %>
 </font></div>
+<%
+displayPageNumbers(srq, rs, iStart, out);
+%>
 <ol id="results">
 <%
 displayResults(rs, iStart, out);
